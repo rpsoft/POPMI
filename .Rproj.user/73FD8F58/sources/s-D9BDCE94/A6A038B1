@@ -1,0 +1,24 @@
+{
+    "id": "A6A038B1",
+    "path": "~/ihw/MultiStateModel/msmApp.R",
+    "project_path": "msmApp.R",
+    "type": "r_source",
+    "hash": "3707173055",
+    "contents": "",
+    "dirty": false,
+    "created": 1606788998228.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "cursorPosition": "43,4",
+        "scrollLine": "27"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1607047859,
+    "encoding": "WINDOWS-1252",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1607047859231,
+    "read_only": false,
+    "read_only_alternatives": []
+}
