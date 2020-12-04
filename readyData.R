@@ -19,6 +19,8 @@ cond_probs <- list(
 weighted_risk_cvd <- read_csv("data/joint/weighted_risk_cvd.csv")
 weighted_risk_mi <- read_csv("data/joint/weighted_risk_mi.csv")
 
+# weighted_risk_cvd %>% filter( year_cat = "(1989,1994]") %>% arrange(event_1,event_2,event_3,event_4 ) %>% View
+
 initials <- function  ( terms ){
 
   paste0(unlist(lapply ( terms, function (x){
@@ -122,8 +124,8 @@ filterMSMData <- function( source, sex_in, simd, hf_in, cerebro_or_mi, year_cat_
   sel_id <- (ids %>% mutate( dff = abs(age-age_in) ) %>% arrange(dff))$id[1]
 
   pdata <- source_data %>% ungroup %>%
-    filter(pid == sel_id) #%>% filter(event_1 == "bleeding")
-    
+    filter(pid == sel_id) %>% mutate( event_0 = source)  #%>% filter(event_1 == "bleeding")
+  
   pdata <- pdata %>% mutate( event_1  = as.character(event_1)) %>% 
     mutate( event_2  = as.character(event_2)) %>% 
     mutate( event_3  = as.character(event_3)) %>% 
@@ -134,15 +136,16 @@ filterMSMData <- function( source, sex_in, simd, hf_in, cerebro_or_mi, year_cat_
     mutate( event_3 = as.character(ifelse( is.na(event_3),"",event_3 ) )) %>% 
     mutate( event_4 = as.character(ifelse( is.na(event_4),"",event_4 ) ))
   
-  pdata <- pdata %>% mutate( path = paste0(event_1,"_",event_2,"_",event_3,"_",event_4))
+  pdata <- pdata %>% mutate( path = paste0(event_0,"_",event_1,"_",event_2,"_",event_3,"_",event_4))
   
   pdata <- pdata %>% mutate( path = str_replace(path,"_*$", "") )
  
-  second_ev <- pdata %>% filter( event_id == "scnd_evnt") %>% mutate( source = event_1, target=paste0(event_1,"_",event_2))
-  third_ev  <- pdata %>% filter( event_id == "thrd_evnt") %>% mutate( source = paste0(event_1,"_",event_2), target=paste0(event_1,"_",event_2,"_",event_3))
-  fourth_ev <- pdata %>% filter( event_id == "fourth_evnt") %>% mutate( source = paste0(event_1,"_",event_2,"_",event_3), target=paste0(event_1,"_",event_2,"_",event_3,"_",event_4))
+  first_ev <- pdata %>% filter( event_id == "frst_evnt") %>% mutate( source = event_0, target=paste0(event_0,"_",event_1))
+  second_ev <- pdata %>% filter( event_id == "scnd_evnt") %>% mutate( source = paste0(event_0,"_",event_1), target=paste0(event_0,"_",event_1,"_",event_2))
+  third_ev  <- pdata %>% filter( event_id == "thrd_evnt") %>% mutate( source = paste0(event_0,"_",event_1,"_",event_2), target=paste0(event_0,"_",event_1,"_",event_2,"_",event_3))
+  fourth_ev <- pdata %>% filter( event_id == "fourth_evnt") %>% mutate( source = paste0(event_0,"_",event_1,"_",event_2,"_",event_3), target=paste0(event_0,"_",event_1,"_",event_2,"_",event_3,"_",event_4))
 
-  all_transitions <- second_ev %>% rbind(third_ev) %>% rbind(fourth_ev) %>% mutate( source = str_replace(source,"_*$", ""),  target = str_replace(target,"_*$", "") ) 
+  all_transitions <- first_ev %>% rbind(second_ev) %>% rbind(third_ev) %>% rbind(fourth_ev) %>% mutate( source = str_replace(source,"_*$", ""),  target = str_replace(target,"_*$", "") ) 
   all_transitions <- all_transitions %>% filter ( cond_prob != 1)
   
   labels <- c(all_transitions$source, all_transitions$target) %>% unique()
@@ -151,10 +154,17 @@ filterMSMData <- function( source, sex_in, simd, hf_in, cerebro_or_mi, year_cat_
   labels <- tibble(target=labels) %>% left_join(all_transitions_n %>% select(target,cond_prob)) %>% 
               mutate( ss = str_split(target,"_") ) %>% rowwise %>% mutate( labels = paste0(ss[length(ss)], ifelse(is.na(cond_prob) , "" ,paste0(" (", round(cond_prob*100,2),"%)"))) )
   
+  
+  all_transitions_n <- all_transitions_n %>% select( all_transitions_n %>% colnames() %>% sort() )
+  
   data <- list( 
     data = all_transitions_n, 
     labels = labels$labels
     )
-  
+  # browser()
   return(data)  
 }
+
+# filterMSMData("mi", 1, 3, 1, 0, "(1989,1994]", 50)  $data %>% View
+
+
